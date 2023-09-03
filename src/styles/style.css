@@ -1,0 +1,57 @@
+.main-container {
+    width: 100%;
+    height: 100%;
+  }
+  .instructions-container {
+    display: flex;
+    flex-direction: row;
+  }
+  .inputs-container {
+    width: 100%;
+    margin: 20px;
+  }
+  .inputs-form {
+    width: 100%;
+  }
+  .input-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 10px;
+  }
+  .input-label {
+    font-size: large;
+    font-weight: bold;
+    margin-right: 5px;
+  }
+  input {
+    margin: 2px;
+  }
+  .units-container {
+    display: flex;
+    flex-direction: row;
+  }
+  .system-unit {
+    width: 100px;
+    height: 300px;
+    margin: 20px;
+    background-color: darkseagreen;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .message-box {
+    width: 400px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(159, 255, 180);
+  }
+  
+  .cycle-count {
+    font-size: large;
+  }
+  

@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "date-fns": "^2.30.0",
+    "rxjs": "^7.8.1"
+  },
+  "name": "rxjs",
+  "description": "",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {
+    "cli": "^1.0.1",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pokreni": "webpack --config webpack.config.js",
+    "watch": "webpack --config webpack.config.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
