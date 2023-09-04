@@ -1,6 +1,6 @@
 .main-container {
     width: 100%;
-    height: 100%;
+    height: 30px;
   }
   .instructions-container {
     display: flex;
@@ -54,4 +54,61 @@
   .cycle-count {
     font-size: large;
   }
-  
+  .basketball-court {
+    width: 70%; 
+    height: 500px; 
+    background-color: #008000;
+    position: relative;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center; 
+  }
+  .basketball-courtin {
+    width: 45%; 
+    height: 400px; 
+    background-color: #008000;
+    border: 5px solid white;
+    border-right: 2.5px solid white; 
+  }
+  .basketball-courtin2 {
+    width: 45%; 
+    height: 400px; 
+    background-color: #008000;
+    border: 5px solid white; 
+    border-left: 2.5px solid white; 
+  }
+  .basketball-div{
+    width: 100%; 
+    height: 400px; 
+    background-color: #008000; 
+    position: relative; 
+    margin-top: 20px; 
+  }
+
+.player1 {
+    width: 80px; 
+    height: 80px; 
+    background-color: #ff0000; 
+    position: absolute; 
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+
+}
+.player2 {
+  width: 80px; 
+  height: 80px; 
+  background-color: #0048ff; 
+  position: absolute; 
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+}
+.jersey-number{
+  color:white;
+  font-size: 45px;
+}

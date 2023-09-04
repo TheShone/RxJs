@@ -1,13 +1,10 @@
 import { inputs, teams } from "./viewConfig";
 
 export function drawInit(host: HTMLElement){
-    const container = document.createElement("div");
-    container.classList.add("main-container");
     const instructionsContainer = document.createElement("div");
     instructionsContainer.classList.add("instructions-container");
     drawInputs(instructionsContainer);
-    container.appendChild(instructionsContainer);
-    host.appendChild(container);
+    host.appendChild(instructionsContainer);
 }
 function drawInputs(host: HTMLDivElement) {
     const inputsContainer = document.createElement("div");
@@ -15,9 +12,18 @@ function drawInputs(host: HTMLDivElement) {
   
     const inputForm = document.createElement("form");
     inputForm.classList.add("inputs-form");
-  
+    const title = document.createElement("label");
+    title.classList.add("title");
+    title.textContent="Filipini MundoBasket 2023";
+    inputForm.appendChild(title);
     drawInputFields(inputForm);
     inputsContainer.appendChild(inputForm);
+    
+    const buttonGame = document.createElement("button");
+    buttonGame.innerHTML = "Započni utakmicu";
+    buttonGame.classList.add("btn-simulate");
+    buttonGame.id="startGame"
+    inputsContainer.appendChild(buttonGame);
   
     host.appendChild(inputsContainer);
   }

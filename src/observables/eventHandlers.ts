@@ -17,6 +17,9 @@ export function handleTeamSelect(selectElement: HTMLSelectElement): Observable<T
         })
     );
 }
+export function handleStartButtonClick(startButton: HTMLButtonElement): Observable<Event> {
+    return fromEvent(startButton, "click");
+  }
 
 
 

@@ -31,6 +31,10 @@ export interface Input {
   }
   export const teams: tim[] = [
     {
+      name: "Izaberi..",
+      id: 5,
+    },
+    {
         name: "Srbija",
         id: 0,
     },
