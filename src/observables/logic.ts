@@ -1,4 +1,4 @@
-import { Observable, Subject, combineLatest, interval, take } from "rxjs";
+import { Observable, Subject, combineLatest, interval, take, takeUntil } from "rxjs";
 import { Team } from "../models/team";
 import {  handleQuarterButtonClick, handleStartButtonClick, handleTeamSelect } from "./eventHandlers";
 
@@ -7,7 +7,8 @@ export class Logic {
     private team2$: Observable<Team>;
     private startButtonClick$: Observable<Event>;
     private quarterButtonClick$: Observable<Event>;
-    private matchEndedSubject = new Subject<void>();
+    private endQuarterSubject = new Subject<number>();
+    private endGameSubject = new Subject<void>();
     private threePointerSubject= new Subject<Team>();
     public Team1!: Team;
     public Team2!: Team;
@@ -25,11 +26,14 @@ export class Logic {
         this.startButtonClick$.subscribe(() => {
         this.startMatch(document.body);
         });
-        this.matchEndedSubject.subscribe(() => {
-            this.endMatch();
-        });
         this.threePointerSubject.subscribe((team:Team)=>{
             this.threePoint(team);
+        })
+        this.endQuarterSubject.subscribe((cetvrtina:number)=>{
+            this.endQuarter(cetvrtina);
+        })
+        this.endGameSubject.subscribe(()=>{
+            this.endMatch();
         })
         this.quarterButtonClick$ = handleQuarterButtonClick(quarterButton);
         this.quarterButtonClick$.subscribe(() => {
@@ -46,27 +50,34 @@ export class Logic {
             const quarterElement = document.getElementById("quarterElement");
             quarterElement.textContent=this.cetvrtina.toString() 
             interval(1000)
-                .pipe(take(Math.floor(Math.random() * 10)+1))
-                .subscribe(() => {
-                    const randomTeam = Math.random() < 0.5 ? this.Team1 : this.Team2;
-                    const randomPoints = Math.floor(Math.random() * 3) + 1;
-                    randomTeam.score += randomPoints;
-                    if(randomPoints===3)
-                    {
-                        this.threePointerSubject.next(randomTeam);
-                    }
-                    this.updateScoreDisplay();
-                });
-                console.log(this.cetvrtina);
-                if (this.cetvrtina === 4) {
-                    console.log("Čekanje kraja četvrte četvrtine...");
-                    interval(1000*6)
-                        .pipe(take(1))
-                        .subscribe(() => {
-                            console.log("Kraj meča");
-                            this.matchEndedSubject.next();
-                        });
-                    }
+            .pipe(
+                takeUntil(this.cetvrtina === 4 ? this.endGameSubject : this.endQuarterSubject),
+                take(5) 
+            )
+            .subscribe(() => {
+                const randomTeam = Math.random() < 0.5 ? this.Team1 : this.Team2;
+                const randomPoints = Math.floor(Math.random() * 3) + 1;
+                randomTeam.score += randomPoints;
+                if (randomPoints === 3) {
+                    this.threePointerSubject.next(randomTeam);
+                }
+                this.updateScoreDisplay();
+            });
+            if (this.cetvrtina !== 4) {
+                interval(1000 * 5)
+                    .pipe(take(1))
+                    .subscribe(() => {
+                        console.log(`Kraj četvrtine ${this.cetvrtina}`);
+                        this.endQuarterSubject.next(this.cetvrtina);
+                    });
+            } else {
+                interval(1000 * 5)
+                    .pipe(take(1))
+                    .subscribe(() => {
+                        console.log("Kraj meča");
+                        this.endGameSubject.next();
+                    });
+            }
             });
             
     }
@@ -288,5 +299,10 @@ export class Logic {
     {
         const winnerDisplay = document.getElementById("winner-display")
         winnerDisplay.textContent = `${tim.name} je postigla 3 poena!`;
+    }
+    private endQuarter(cetvrtina: number)
+    {
+        const winnerDisplay = document.getElementById("winner-display")
+        winnerDisplay.textContent = `Završena je ${cetvrtina} četvrtina!`;
     }
 }
