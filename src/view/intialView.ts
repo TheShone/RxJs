@@ -16,14 +16,18 @@ function drawInputs(host: HTMLDivElement) {
     title.classList.add("title");
     title.textContent="Filipini MundoBasket 2023";
     inputForm.appendChild(title);
-    drawInputFields(inputForm);
-    inputsContainer.appendChild(inputForm);
-    
     const buttonGame = document.createElement("button");
     buttonGame.innerHTML = "Započni utakmicu";
     buttonGame.classList.add("btn-simulate");
     buttonGame.id="startGame"
     inputsContainer.appendChild(buttonGame);
+    drawInputFields(inputForm);
+    inputsContainer.appendChild(inputForm);
+    const buttonQuarter = document.createElement("button");
+    buttonQuarter.innerHTML = "Započni četvrtinu";
+    buttonQuarter.classList.add("btn-simulate");
+    buttonQuarter.id="buttonQuarter"
+    inputsContainer.appendChild(buttonQuarter);
   
     host.appendChild(inputsContainer);
   }

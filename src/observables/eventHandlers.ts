@@ -20,6 +20,9 @@ export function handleTeamSelect(selectElement: HTMLSelectElement): Observable<T
 export function handleStartButtonClick(startButton: HTMLButtonElement): Observable<Event> {
     return fromEvent(startButton, "click");
   }
+  export function handleQuarterButtonClick(quarterButton: HTMLButtonElement): Observable<Event> {
+    return fromEvent(quarterButton, "click");
+  }
 
 
 
