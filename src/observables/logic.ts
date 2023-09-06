@@ -34,6 +34,7 @@ export class Logic {
   private remainingQuarterTime: number = 10;
   private timeoutDuration: number =3;
   private timeoutTeam: Team | null = null;
+  private matchEnded= false;
   private scoringEnabled: boolean = false;
   private cetvrtina: number = 0;
   constructor(
@@ -68,6 +69,10 @@ export class Logic {
       this.pauseScoring();
       this.startTimeoutCountdown();
     });
+    const buttonQuarter = document.getElementById(
+      "buttonQuarter"
+    ) as HTMLButtonElement;
+    buttonQuarter.disabled = true;
     this.quarterButtonClick$ = handleQuarterButtonClick(quarterButton);
     this.quarterButtonClick$.subscribe(() => {
       this.scoringEnabled = true;
@@ -88,10 +93,11 @@ export class Logic {
           takeUntil(
             this.cetvrtina === 4 ? this.endGameSubject : this.endQuarterSubject
           ),
-          takeWhile(() => !this.timeoutActive || this.remainingTimeoutTime <= 0 || this.remainingQuarterTime > 0)
+          takeWhile(() => (!this.timeoutActive || this.remainingTimeoutTime <= 0) ||
+          this.remainingQuarterTime > 0)
         )
         .subscribe(() => {
-          if(!this.scoringEnabled || this.timeoutActive)
+          if(!this.scoringEnabled || this.timeoutActive || this.matchEnded)
           {
             return;
           }
@@ -101,28 +107,16 @@ export class Logic {
             if (randomPoints === 3) {
               this.threePointerSubject.next(randomTeam);
             }
-            this.checkConsecutiveScores(randomTeam);
             this.updateScoreDisplay();
             this.remainingQuarterTime -= 1;
+            if(this.remainingQuarterTime>0)
+            {
+              this.checkConsecutiveScores(randomTeam);
+            }
             if (this.remainingQuarterTime <= 0) {
               this.endQuarterSubject.next(this.cetvrtina);
             }
         });
-      // if (this.cetvrtina !== 4) {
-      //   interval(1000 * 10)
-      //     .pipe(take(1))
-      //     .subscribe(() => {
-      //       console.log(`Kraj četvrtine ${this.cetvrtina}`);
-      //       this.endQuarterSubject.next(this.cetvrtina);
-      //     });
-      // } else {
-      //   interval(1000 * 10)
-      //     .pipe(take(1))
-      //     .subscribe(() => {
-      //       console.log("Kraj meča");
-      //       this.endGameSubject.next();
-      //     });
-      // }
     });
   }
   private startMatch(host: HTMLElement) {
@@ -182,6 +176,10 @@ export class Logic {
     courtContainer.appendChild(courtContainerin2);
     combineLatest([this.team1$, this.team2$]).subscribe(([team1, team2]) => {
       if (team1 != undefined && team2 != undefined) {
+        const buttonQuarter = document.getElementById(
+          "buttonQuarter"
+        ) as HTMLButtonElement;
+        buttonQuarter.disabled = false;
         this.Team1 = team1;
         this.Team2 = team2;
         console.log(this.Team1);
@@ -322,22 +320,35 @@ export class Logic {
     }
   }
   private endMatch() {
+    if (!this.matchEnded) {
     const winnerDisplay = document.getElementById("winner-display");
     if (this.Team1.score > this.Team2.score) {
       winnerDisplay.textContent = `${this.Team1.name} je pobedila!`;
+      console.log(`${this.Team1.name} je pobedila!`);
     } else if (this.Team2.score > this.Team1.score) {
       winnerDisplay.textContent = `${this.Team2.name} je pobedila!`;
+      console.log(`${this.Team2.name} je pobedila!`);
     } else {
       winnerDisplay.textContent = "Nerešeno!";
+      console.log("Nerešeno!");
     }
+    this.matchEnded = true;
+  }
   }
   private threePoint(tim: Team) {
     const winnerDisplay = document.getElementById("winner-display");
     winnerDisplay.textContent = `${tim.name} je postigla 3 poena!`;
   }
   private endQuarter(cetvrtina: number) {
-    const winnerDisplay = document.getElementById("winner-display");
-    winnerDisplay.textContent = `Završena je ${cetvrtina} četvrtina!`;
+    if (!this.timeoutActive) {
+      const winnerDisplay = document.getElementById("winner-display");
+      if (this.cetvrtina < 4) {
+        winnerDisplay.textContent = `Završena je ${cetvrtina} četvrtina!`;
+        console.log(`Završena je ${cetvrtina} četvrtina!`);
+      } else {
+        this.endMatch();
+      }
+    }
   }
   private pauseScoring() {
     console.log("Pauziranje generisanja poena...");
@@ -363,7 +374,8 @@ export class Logic {
   }
   private startTimeoutCountdown() {
     interval(3000)
-      .pipe(take(this.remainingTimeoutTime), takeUntil(this.endQuarterSubject))
+      .pipe(takeWhile(() => this.timeoutActive && this.remainingTimeoutTime > 0)
+      , takeUntil(this.endQuarterSubject))
       .subscribe(() => {
         this.remainingTimeoutTime -= 1;
         console.log(
@@ -384,15 +396,21 @@ export class Logic {
       this.consecutiveScores[team.id] = 1;
     } else {
       this.consecutiveScores[team.id]++;
-      const otherTeam = team === this.Team1 ? this.Team2 : this.Team1;
-      this.consecutiveScores[otherTeam.id] = 0;
-      if (this.consecutiveScores[team.id] >= this.consecutiveScoreThreshold) {
-        if (!this.timeoutActive || this.remainingTimeoutTime === 0) {
-          this.timeoutSubject.next(otherTeam);
-          this.timeoutActive = true;
-        }
+    }
+      if (team === this.Team1) 
+          this.consecutiveScores[this.Team2.id] = 0;
+       else 
+          this.consecutiveScores[this.Team1.id] = 0;
+        if (this.consecutiveScores[team.id] >= this.consecutiveScoreThreshold) 
+        {
+          if (!this.timeoutActive || this.remainingTimeoutTime === 0) 
+          {
+            const otherTeam = team === this.Team1 ? this.Team2 : this.Team1;
+            this.timeoutSubject.next(otherTeam);
+            this.timeoutActive = true;
+          }
         this.consecutiveScores[team.id] = 0;
       }
-    }
+    
   }
 }
