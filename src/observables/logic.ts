@@ -25,6 +25,8 @@ export class Logic {
   private endGameSubject = new Subject<void>();
   private threePointerSubject = new Subject<Team>();
   private timeoutSubject = new Subject<Team>();
+  private substitution1 : number = 6;
+  private substitution2 : number = 6;
   private consecutiveScores: { [teamId: string]: number } = {};
   private consecutiveScoreThreshold = 3;
   public Team1!: Team;
@@ -59,13 +61,40 @@ export class Logic {
       this.endMatch();
     });
     this.timeoutSubject.subscribe((team) => {
-      console.log(`Timeout za ${team.name}!`);
       const winnerDisplay = document.getElementById("winner-display");
-      winnerDisplay.textContent = `Timeout za ${team.name}!`;
+      if(team===this.Team1)
+      {
+          console.log(`Timeout za ${team.name}!. ${this.getPlayer(team,this.substitution1)}!`);
+          winnerDisplay.textContent = `Timeout za ${team.name}!. ${this.getPlayer(team,this.substitution1)}!`;
+      }
+      else
+      {
+          console.log(`Timeout za ${team.name}!. ${this.getPlayer(team,this.substitution2)}!`);
+          winnerDisplay.textContent = `Timeout za ${team.name}!. ${this.getPlayer(team,this.substitution2)}!`;
+      }
       this.timeoutActive = true;
       this.timeoutTeam = team;
       this.remainingTimeoutTime = this.timeoutDuration;
       this.scoringEnabled = false;
+      this.clearCourt();
+      const positions: number[]=[1,2,3,4,5,6]
+      const courtContainer = document.getElementById("courtContainer")
+      if(team===this.Team1)
+      {
+        const filteredPositions = positions.filter((p) => p !== this.substitution1);
+        const randomIndex = Math.floor(Math.random() * filteredPositions.length);
+        const randomElement = filteredPositions[randomIndex];
+        this.drawPlayers1(courtContainer,team,randomElement);
+        this.substitution1=randomElement
+      }
+      else
+      {
+        const filteredPositions = positions.filter((p) => p !== this.substitution2);
+        const randomIndex = Math.floor(Math.random() * filteredPositions.length);
+        const randomElement = filteredPositions[randomIndex];
+        this.drawPlayers2(courtContainer,team,randomElement);
+        this.substitution2=randomElement
+      }
       this.pauseScoring();
       this.startTimeoutCountdown();
     });
@@ -75,6 +104,10 @@ export class Logic {
     buttonQuarter.disabled = true;
     this.quarterButtonClick$ = handleQuarterButtonClick(quarterButton);
     this.quarterButtonClick$.subscribe(() => {
+      const buttonQuarter = document.getElementById(
+        "buttonQuarter"
+      ) as HTMLButtonElement;
+      buttonQuarter.disabled = true;
       this.scoringEnabled = true;
       this.cetvrtina = this.cetvrtina + 1;
 
@@ -120,6 +153,10 @@ export class Logic {
     });
   }
   private startMatch(host: HTMLElement) {
+    const startGame = document.getElementById(
+      "startGame"
+    ) as HTMLButtonElement;
+    startGame.disabled = true;
     const backetballDiv = document.createElement("div");
     backetballDiv.classList.add("basketDiv");
     host.appendChild(backetballDiv);
@@ -166,6 +203,7 @@ export class Logic {
     scoreContainer.appendChild(winnerDisplay);
     backetballDiv.appendChild(scoreContainer);
     const courtContainer = document.createElement("div");
+    courtContainer.id="courtContainer";
     courtContainer.classList.add("basketball-court");
     host.appendChild(courtContainer);
     const courtContainerin1 = document.createElement("div");
@@ -185,8 +223,8 @@ export class Logic {
         console.log(this.Team1);
         console.log(this.Team2);
 
-        this.drawPlayers1(courtContainer, this.Team1);
-        this.drawPlayers2(courtContainer, this.Team2);
+        this.drawPlayers1(courtContainer, this.Team1,6);
+        this.drawPlayers2(courtContainer, this.Team2,6);
         const team1ScoreLabel = document.getElementById("team1ScoreLabel");
         const team2ScoreLabel = document.getElementById("team2ScoreLabel");
 
@@ -197,111 +235,15 @@ export class Logic {
       }
     });
   }
-  private drawPlayers1(courtContainer: HTMLElement, team: Team) {
-    if (team && team.players) {
-      team.players
-        .filter((player) => player.position !== 6)
-        .forEach((player) => {
-          const playerElement = document.createElement("div");
-          playerElement.classList.add("player1");
-          switch (player.position) {
-            case 1: {
-              this.setStyles(playerElement, {
-                top: "215px",
-                left: `400px`,
-              });
-              break;
-            }
-            case 2: {
-              this.setStyles(playerElement, {
-                top: "115px",
-                left: `250px`,
-              });
-              break;
-            }
-            case 3: {
-              this.setStyles(playerElement, {
-                top: "315px",
-                left: `250px`,
-              });
-              break;
-            }
-            case 4: {
-              this.setStyles(playerElement, {
-                top: "80px",
-                left: `100px`,
-              });
-              break;
-            }
-            case 5: {
-              this.setStyles(playerElement, {
-                top: "350px",
-                left: `100px`,
-              });
-              break;
-            }
-          }
-          const labelElement = document.createElement("label");
-          labelElement.classList.add("jersey-number");
-          labelElement.textContent = player.jerseyNumber.toString();
-          playerElement.appendChild(labelElement);
-          courtContainer.appendChild(playerElement);
-        });
-    } else {
-      console.log("else " + team);
-    }
+  private drawPlayers1(courtContainer: HTMLElement, team: Team, position:number) {
+    this.drawPlayers(courtContainer, team, position,"player1","215px","400px","115px",
+      "250px","315px","250px","80px","100px","350px","100px"
+      )
   }
-  private drawPlayers2(courtContainer: HTMLElement, team: Team) {
-    if (team && team.players) {
-      team.players
-        .filter((player) => player.position !== 6)
-        .forEach((player) => {
-          const playerElement = document.createElement("div");
-          playerElement.classList.add("player2");
-          switch (player.position) {
-            case 1: {
-              this.setStyles(playerElement, {
-                top: "215px",
-                left: `580px`,
-              });
-              break;
-            }
-            case 2: {
-              this.setStyles(playerElement, {
-                top: "115px",
-                left: `730px`,
-              });
-              break;
-            }
-            case 3: {
-              this.setStyles(playerElement, {
-                top: "315px",
-                left: `730px`,
-              });
-              break;
-            }
-            case 4: {
-              this.setStyles(playerElement, {
-                top: "80px",
-                left: `880px`,
-              });
-              break;
-            }
-            case 5: {
-              this.setStyles(playerElement, {
-                top: "350px",
-                left: `880px`,
-              });
-              break;
-            }
-          }
-          const labelElement = document.createElement("label");
-          labelElement.classList.add("jersey-number");
-          labelElement.textContent = player.jerseyNumber.toString();
-          playerElement.appendChild(labelElement);
-          courtContainer.appendChild(playerElement);
-        });
-    }
+  private drawPlayers2(courtContainer: HTMLElement, team: Team, position:number) {
+    this.drawPlayers(courtContainer, team, position,"player2","215px","580px","115px",
+      "730px","315px","730px","80px","880px","350px","880px"
+      )
   }
   public setStyles(element: HTMLElement, styles: { [key: string]: string }) {
     for (const key in styles) {
@@ -343,6 +285,10 @@ export class Logic {
     if (!this.timeoutActive) {
       const winnerDisplay = document.getElementById("winner-display");
       if (this.cetvrtina < 4) {
+        const buttonQuarter = document.getElementById(
+          "buttonQuarter"
+        ) as HTMLButtonElement;
+        buttonQuarter.disabled = false;
         winnerDisplay.textContent = `Završena je ${cetvrtina} četvrtina!`;
         console.log(`Završena je ${cetvrtina} četvrtina!`);
       } else {
@@ -373,7 +319,7 @@ export class Logic {
       });
   }
   private startTimeoutCountdown() {
-    interval(3000)
+    interval(1000)
       .pipe(takeWhile(() => this.timeoutActive && this.remainingTimeoutTime > 0)
       , takeUntil(this.endQuarterSubject))
       .subscribe(() => {
@@ -412,5 +358,117 @@ export class Logic {
         this.consecutiveScores[team.id] = 0;
       }
     
+  }
+  private drawPlayers(courtContainer: HTMLElement, team: Team, position:number,cssClass:string,p1t:string,p1l:string,p2t:string,
+    p2l:string,p3t:string,p3l:string,p4t:string,p4l:string,p5t:string,p5l:string
+    ) {
+    if (team && team.players) {
+      team.players
+        .filter((player) => player.position !== position)
+        .forEach((player) => {
+          const playerElement = document.createElement("div");
+          playerElement.classList.add(cssClass);
+          switch (player.position) {
+            case 1: {
+              this.setStyles(playerElement, {
+                top: p1t,
+                left: p1l,
+              });
+              break;
+            }
+            case 2: {
+              this.setStyles(playerElement, {
+                top: p2t,
+                left: p2l,
+              });
+              break;
+            }
+            case 3: {
+              this.setStyles(playerElement, {
+                top: p3t,
+                left: p3l,
+              });
+              break;
+            }
+            case 4: {
+              this.setStyles(playerElement, {
+                top: p4t,
+                left: p4l,
+              });
+              break;
+            }
+            case 5: {
+              this.setStyles(playerElement, {
+                top: p5t,
+                left: p5l,
+              });
+              break;
+            }
+            case 6: {
+              switch (position) {
+                case 1: {
+                  this.setStyles(playerElement, {
+                    top: p1t,
+                    left: p1l,
+                  });
+                  break;
+                }
+                case 2: {
+                  this.setStyles(playerElement, {
+                    top: p2t,
+                    left: p2l,
+                  });
+                  break;
+                }
+                case 3: {
+                  this.setStyles(playerElement, {
+                    top: p3t,
+                    left: p3l,
+                  });
+                  break;
+                }
+                case 4: {
+                  this.setStyles(playerElement, {
+                    top: p4t,
+                    left: p4l,
+                  });
+                  break;
+                }
+                case 5: {
+                  this.setStyles(playerElement, {
+                    top: p5t,
+                    left: p5l,
+                  });
+                  break;
+                }
+              }
+            }
+          }
+          const labelElement = document.createElement("label");
+          labelElement.classList.add("jersey-number");
+          labelElement.textContent = player.jerseyNumber.toString();
+          playerElement.appendChild(labelElement);
+          courtContainer.appendChild(playerElement);
+        });
+    } else {
+      console.log("else " + team);
+    }
+  }
+  private clearCourt() {
+    const courtContainer = document.querySelector(".basketball-courtin");
+    if (courtContainer) {
+      while (courtContainer.firstChild) {
+        courtContainer.removeChild(courtContainer.firstChild);
+      }
+    }
+  }
+  private getPlayer(team: Team, position: number): string {
+    if (team) {
+      const player = team.players.find((p) => p.position === position);
+      if (player) {
+        return "Ulazi igrac "+player.surname+" sa brojem: "+player.jerseyNumber;
+      }
+    }
+    return null; 
   }
 }
