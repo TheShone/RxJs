@@ -50,6 +50,8 @@ export class Logic {
     this.startButtonClick$ = handleStartButtonClick(startButton);
     this.startButtonClick$.subscribe(() => {
       this.startMatch(document.body);
+      this.disableElement("team1",false);
+      this.disableElement("team2",false);
     });
     this.threePointerSubject.subscribe((team: Team) => {
       this.threePoint(team);
@@ -98,24 +100,19 @@ export class Logic {
       this.pauseScoring();
       this.startTimeoutCountdown();
     });
-    const buttonQuarter = document.getElementById(
-      "buttonQuarter"
-    ) as HTMLButtonElement;
-    buttonQuarter.disabled = true;
+    this.disableElement("team1",true);
+    this.disableElement("team2",true);
+    this.disableElement("buttonQuarter",true)
     this.quarterButtonClick$ = handleQuarterButtonClick(quarterButton);
     this.quarterButtonClick$.subscribe(() => {
-      const buttonQuarter = document.getElementById(
-        "buttonQuarter"
-      ) as HTMLButtonElement;
-      buttonQuarter.disabled = true;
+      this.disableElement("buttonQuarter",true)
+      this.disableElement("team1",true);
+      this.disableElement("team2",true);
       this.scoringEnabled = true;
       this.cetvrtina = this.cetvrtina + 1;
 
       if (this.cetvrtina == 4) {
-        const buttonQuarter = document.getElementById(
-          "buttonQuarter"
-        ) as HTMLButtonElement;
-        buttonQuarter.disabled = true;
+        this.disableElement("buttonQuarter",true)
       }
 
       const quarterElement = document.getElementById("quarterElement");
@@ -153,10 +150,7 @@ export class Logic {
     });
   }
   private startMatch(host: HTMLElement) {
-    const startGame = document.getElementById(
-      "startGame"
-    ) as HTMLButtonElement;
-    startGame.disabled = true;
+    this.disableElement("startGame",true)
     const backetballDiv = document.createElement("div");
     backetballDiv.classList.add("basketDiv");
     host.appendChild(backetballDiv);
@@ -214,10 +208,7 @@ export class Logic {
     courtContainer.appendChild(courtContainerin2);
     combineLatest([this.team1$, this.team2$]).subscribe(([team1, team2]) => {
       if (team1 != undefined && team2 != undefined) {
-        const buttonQuarter = document.getElementById(
-          "buttonQuarter"
-        ) as HTMLButtonElement;
-        buttonQuarter.disabled = false;
+        this.disableElement("buttonQuarter",false);
         this.Team1 = team1;
         this.Team2 = team2;
         console.log(this.Team1);
@@ -470,5 +461,12 @@ export class Logic {
       }
     }
     return null; 
+  }
+  private disableElement(element: string, disable:boolean)
+  {
+    const buttonQuarter = document.getElementById(
+      element
+    ) as HTMLButtonElement;
+    buttonQuarter.disabled = disable;
   }
 }
