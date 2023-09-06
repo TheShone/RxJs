@@ -1,8 +1,10 @@
 import {
+  EMPTY,
   Observable,
   Subject,
   combineLatest,
   interval,
+  switchMap,
   take,
   takeUntil,
   takeWhile,
@@ -29,6 +31,8 @@ export class Logic {
   public Team2!: Team;
   private timeoutActive: boolean = false;
   private remainingTimeoutTime: number = 0;
+  private remainingQuarterTime: number = 10;
+  private timeoutDuration: number =3;
   private timeoutTeam: Team | null = null;
   private scoringEnabled: boolean = false;
   private cetvrtina: number = 0;
@@ -59,7 +63,8 @@ export class Logic {
       winnerDisplay.textContent = `Timeout za ${team.name}!`;
       this.timeoutActive = true;
       this.timeoutTeam = team;
-      this.remainingTimeoutTime = 1;
+      this.remainingTimeoutTime = this.timeoutDuration;
+      this.scoringEnabled = false;
       this.pauseScoring();
       this.startTimeoutCountdown();
     });
@@ -77,39 +82,47 @@ export class Logic {
 
       const quarterElement = document.getElementById("quarterElement");
       quarterElement.textContent = this.cetvrtina.toString();
+      this.remainingQuarterTime = 10;
       interval(1000)
         .pipe(
           takeUntil(
             this.cetvrtina === 4 ? this.endGameSubject : this.endQuarterSubject
           ),
-          take(10),
-          takeWhile(() => !this.timeoutActive || this.remainingTimeoutTime > 0)
+          takeWhile(() => !this.timeoutActive || this.remainingTimeoutTime <= 0 || this.remainingQuarterTime > 0)
         )
         .subscribe(() => {
-          const randomTeam = Math.random() < 0.5 ? this.Team1 : this.Team2;
-          const randomPoints = Math.floor(Math.random() * 3) + 1;
-          randomTeam.score += randomPoints;
-          if (randomPoints === 3) {
-            this.threePointerSubject.next(randomTeam);
+          if(!this.scoringEnabled || this.timeoutActive)
+          {
+            return;
           }
-          this.checkConsecutiveScores(randomTeam);
-          this.updateScoreDisplay();
+          const randomTeam = Math.random() < 0.5 ? this.Team1 : this.Team2;
+            const randomPoints = Math.floor(Math.random() * 3) + 1;
+            randomTeam.score += randomPoints;
+            if (randomPoints === 3) {
+              this.threePointerSubject.next(randomTeam);
+            }
+            this.checkConsecutiveScores(randomTeam);
+            this.updateScoreDisplay();
+            this.remainingQuarterTime -= 1;
+            if (this.remainingQuarterTime <= 0) {
+              this.endQuarterSubject.next(this.cetvrtina);
+            }
         });
-      if (this.cetvrtina !== 4) {
-        interval(1000 * 10)
-          .pipe(take(1))
-          .subscribe(() => {
-            console.log(`Kraj četvrtine ${this.cetvrtina}`);
-            this.endQuarterSubject.next(this.cetvrtina);
-          });
-      } else {
-        interval(1000 * 10)
-          .pipe(take(1))
-          .subscribe(() => {
-            console.log("Kraj meča");
-            this.endGameSubject.next();
-          });
-      }
+      // if (this.cetvrtina !== 4) {
+      //   interval(1000 * 10)
+      //     .pipe(take(1))
+      //     .subscribe(() => {
+      //       console.log(`Kraj četvrtine ${this.cetvrtina}`);
+      //       this.endQuarterSubject.next(this.cetvrtina);
+      //     });
+      // } else {
+      //   interval(1000 * 10)
+      //     .pipe(take(1))
+      //     .subscribe(() => {
+      //       console.log("Kraj meča");
+      //       this.endGameSubject.next();
+      //     });
+      // }
     });
   }
   private startMatch(host: HTMLElement) {
@@ -329,8 +342,18 @@ export class Logic {
   private pauseScoring() {
     console.log("Pauziranje generisanja poena...");
     this.timeoutActive = true;
+    this.remainingQuarterTime = Math.max(this.remainingQuarterTime, 0);
     interval(1000)
-      .pipe(take(3), takeUntil(this.endQuarterSubject))
+      .pipe(
+      switchMap(() => {
+        if (this.timeoutActive) {
+          return EMPTY; 
+        }
+        return interval(1000); 
+      }),
+      take(3),
+      takeUntil(this.endQuarterSubject)
+    )
       .subscribe(() => {
         console.log("Nastavljanje generisanja poena...");
         this.timeoutActive = false;
@@ -349,9 +372,10 @@ export class Logic {
         if (this.remainingTimeoutTime === 0) {
           this.timeoutActive = false;
           this.timeoutTeam = null;
+          this.scoringEnabled = true;
+          const winnerDisplay = document.getElementById("winner-display");
+          winnerDisplay.textContent = `Time out zavrsen, igra nastavlja dalje`;
         }
-        const winnerDisplay = document.getElementById("winner-display");
-        winnerDisplay.textContent = `Time out zavrsen, igra nastavlja dalje`;
       });
   }
   private checkConsecutiveScores(team: Team) {
