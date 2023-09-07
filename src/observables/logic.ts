@@ -2,6 +2,7 @@ import {
   EMPTY,
   Observable,
   Subject,
+  Subscription,
   combineLatest,
   interval,
   switchMap,
@@ -25,6 +26,12 @@ export class Logic {
   private endGameSubject = new Subject<void>();
   private threePointerSubject = new Subject<Team>();
   private timeoutSubject = new Subject<Team>();
+  private startButtonClickSubscription: Subscription | undefined;
+  private quarterButtonClickSubscription: Subscription | undefined;
+  private endQuarterSubscription: Subscription | undefined;
+  private endGameSubscription: Subscription | undefined;
+  private threePointerSubscription: Subscription | undefined;
+  private timeOutSubscription: Subscription | undefined;
   private substitution1 : number = 6;
   private substitution2 : number = 6;
   private consecutiveScores: { [teamId: string]: number } = {};
@@ -48,21 +55,21 @@ export class Logic {
     this.team1$ = handleTeamSelect(inputTeam1);
     this.team2$ = handleTeamSelect(inputTeam2);
     this.startButtonClick$ = handleStartButtonClick(startButton);
-    this.startButtonClick$.subscribe(() => {
+    this.startButtonClickSubscription=this.startButtonClick$.subscribe(() => {
       this.startMatch(document.body);
       this.disableElement("team1",false);
       this.disableElement("team2",false);
     });
-    this.threePointerSubject.subscribe((team: Team) => {
+    this.threePointerSubscription=this.threePointerSubject.subscribe((team: Team) => {
       this.threePoint(team);
     });
-    this.endQuarterSubject.subscribe((cetvrtina: number) => {
+    this.endQuarterSubscription=this.endQuarterSubject.subscribe((cetvrtina: number) => {
       this.endQuarter(cetvrtina);
     });
-    this.endGameSubject.subscribe(() => {
+    this.endGameSubscription=this.endGameSubject.subscribe(() => {
       this.endMatch();
     });
-    this.timeoutSubject.subscribe((team) => {
+    this.timeOutSubscription=this.timeoutSubject.subscribe((team) => {
       const winnerDisplay = document.getElementById("winner-display");
       if(team===this.Team1)
       {
@@ -78,7 +85,7 @@ export class Logic {
       this.timeoutTeam = team;
       this.remainingTimeoutTime = this.timeoutDuration;
       this.scoringEnabled = false;
-      this.clearCourt();
+      this.clearElement(".basketball-courtin");
       const positions: number[]=[1,2,3,4,5,6]
       const courtContainer = document.getElementById("courtContainer")
       if(team===this.Team1)
@@ -104,7 +111,7 @@ export class Logic {
     this.disableElement("team2",true);
     this.disableElement("buttonQuarter",true)
     this.quarterButtonClick$ = handleQuarterButtonClick(quarterButton);
-    this.quarterButtonClick$.subscribe(() => {
+    this.quarterButtonClickSubscription=this.quarterButtonClick$.subscribe(() => {
       this.disableElement("buttonQuarter",true)
       this.disableElement("team1",true);
       this.disableElement("team2",true);
@@ -152,8 +159,46 @@ export class Logic {
   private startMatch(host: HTMLElement) {
     this.disableElement("startGame",true)
     const backetballDiv = document.createElement("div");
+    backetballDiv.id="backetballDiv";
     backetballDiv.classList.add("basketDiv");
     host.appendChild(backetballDiv);
+    this.drawScoreboard(backetballDiv);
+    const courtContainer = document.createElement("div");
+    courtContainer.id="courtContainer";
+    courtContainer.classList.add("basketball-court");
+    host.appendChild(courtContainer);
+    this.drawCourt(courtContainer)
+    combineLatest([this.team1$, this.team2$]).subscribe(([team1, team2]) => {
+      if (team1 != undefined && team2 != undefined) {
+        this.disableElement("buttonQuarter",false);
+        this.Team1 = team1;
+        this.Team2 = team2;
+        console.log(this.Team1);
+        console.log(this.Team2);
+
+        this.drawPlayers1(courtContainer, this.Team1,6);
+        this.drawPlayers2(courtContainer, this.Team2,6);
+        const team1ScoreLabel = document.getElementById("team1ScoreLabel");
+        const team2ScoreLabel = document.getElementById("team2ScoreLabel");
+
+        if (team1ScoreLabel && team2ScoreLabel) {
+          team1ScoreLabel.textContent = this.Team1.name + ": ";
+          team2ScoreLabel.textContent = this.Team2.name + ": ";
+        }
+      }
+    });
+  }
+  private drawCourt(courtContainer: HTMLElement)
+  {
+    const courtContainerin1 = document.createElement("div");
+    courtContainerin1.classList.add("basketball-courtin");
+    courtContainer.appendChild(courtContainerin1);
+    const courtContainerin2 = document.createElement("div");
+    courtContainerin2.classList.add("basketball-courtin2");
+    courtContainer.appendChild(courtContainerin2);
+  }
+  private drawScoreboard(courtContainer: HTMLElement)
+  {
     const scoreContainer = document.createElement("div");
     scoreContainer.classList.add("score-container");
 
@@ -195,36 +240,7 @@ export class Logic {
     winnerDisplay.id = "winner-display";
     winnerDisplay.classList.add("winner-display");
     scoreContainer.appendChild(winnerDisplay);
-    backetballDiv.appendChild(scoreContainer);
-    const courtContainer = document.createElement("div");
-    courtContainer.id="courtContainer";
-    courtContainer.classList.add("basketball-court");
-    host.appendChild(courtContainer);
-    const courtContainerin1 = document.createElement("div");
-    courtContainerin1.classList.add("basketball-courtin");
-    courtContainer.appendChild(courtContainerin1);
-    const courtContainerin2 = document.createElement("div");
-    courtContainerin2.classList.add("basketball-courtin2");
-    courtContainer.appendChild(courtContainerin2);
-    combineLatest([this.team1$, this.team2$]).subscribe(([team1, team2]) => {
-      if (team1 != undefined && team2 != undefined) {
-        this.disableElement("buttonQuarter",false);
-        this.Team1 = team1;
-        this.Team2 = team2;
-        console.log(this.Team1);
-        console.log(this.Team2);
-
-        this.drawPlayers1(courtContainer, this.Team1,6);
-        this.drawPlayers2(courtContainer, this.Team2,6);
-        const team1ScoreLabel = document.getElementById("team1ScoreLabel");
-        const team2ScoreLabel = document.getElementById("team2ScoreLabel");
-
-        if (team1ScoreLabel && team2ScoreLabel) {
-          team1ScoreLabel.textContent = this.Team1.name + ": ";
-          team2ScoreLabel.textContent = this.Team2.name + ": ";
-        }
-      }
-    });
+    courtContainer.appendChild(scoreContainer);
   }
   private drawPlayers1(courtContainer: HTMLElement, team: Team, position:number) {
     this.drawPlayers(courtContainer, team, position,"player1","215px","400px","115px",
@@ -265,6 +281,7 @@ export class Logic {
       winnerDisplay.textContent = "Nerešeno!";
       console.log("Nerešeno!");
     }
+    this.unsubscribe();
     this.matchEnded = true;
   }
   }
@@ -445,8 +462,8 @@ export class Logic {
       console.log("else " + team);
     }
   }
-  private clearCourt() {
-    const courtContainer = document.querySelector(".basketball-courtin");
+  private clearElement(element:string) {
+    const courtContainer = document.querySelector(element);
     if (courtContainer) {
       while (courtContainer.firstChild) {
         courtContainer.removeChild(courtContainer.firstChild);
@@ -468,5 +485,28 @@ export class Logic {
       element
     ) as HTMLButtonElement;
     buttonQuarter.disabled = disable;
+  }
+  private unsubscribe(){
+    if(this.startButtonClickSubscription){
+      this.startButtonClickSubscription.unsubscribe()
+    }
+    if(this.quarterButtonClickSubscription){
+      this.quarterButtonClickSubscription.unsubscribe()
+    }
+    if(this.endQuarterSubscription){
+      this.endQuarterSubscription.unsubscribe()
+    }
+    if(this.endGameSubscription)
+    {
+      this.endGameSubscription.unsubscribe()
+    }
+    if(this.threePointerSubscription)
+    {
+      this.threePointerSubscription.unsubscribe()
+    }
+    if(this.timeOutSubscription)
+    {
+      this.timeOutSubscription.unsubscribe()
+    }
   }
 }
